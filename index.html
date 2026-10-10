@@ -16,7 +16,7 @@ input{width:100%;background:#0e1424;border:1px solid var(--bd);color:var(--tx);b
 input:focus{outline:2px solid var(--ac);border-color:transparent}
 button{border:0;border-radius:12px;padding:13px;font-size:16px;font-weight:700;cursor:pointer;background:var(--ac);color:#fff;width:100%;margin-top:12px}
 .help{font-size:13px;color:var(--mu);margin:10px 0 0}.cap{display:block;color:var(--mu);font-size:11px;margin-top:6px}.mini button:disabled{opacity:.4}.res{margin-top:12px;padding:12px;border-radius:12px;font-size:15px}
-.res b{font-size:24px;display:block;line-height:1.2}.sm{display:block;margin-top:6px;opacity:.85;font-size:13px}
+.res b{font-size:24px;line-height:1.3}.of{font-size:17px}.sm{display:block;margin-top:6px;opacity:.85;font-size:13px}
 .ok{background:#12301f;color:var(--ok)}.bad{background:#3a1620;color:var(--bad)}
 .bar{height:8px;background:#0e1424;border-radius:6px;margin-top:10px;position:relative;overflow:hidden}
 .bar i{display:block;height:100%;border-radius:6px}
@@ -51,11 +51,11 @@ function calc(S,H,A,r){
 }
 function msg(c){
   if(c.rem===0)return '<b>Semester over</b>'+(c.x>=0?': you made it':': below '+c.r+'%');
-  if(c.x>0)return '<b>You can bunk '+c.x+' more class'+(c.x>1?'es':'')+'</b>';
+  if(c.x>0)return '<b>You can bunk '+c.x+' more class'+(c.x>1?'es':'')+'</b> <span class="of">out of the '+c.rem+' left</span>';
   if(c.x===0)return '<b>Attend all '+c.rem+' remaining class'+(c.rem>1?'es':'')+'</b>';
   return '<b>Too late: max '+c.maxp.toFixed(0)+'%</b>';
 }
-function sub(c){return c.rem===0?'':(c.x>0?'out of ':'')+c.rem+' left'}
+function sub(c){return c.rem===0||c.x>0?'':c.rem+' left'}
 function bar(c){var w=c.A/c.S*100,g=c.maxp,k=c.x>=0?'var(--ok)':'var(--bad)';return '<div class="bar"><i style="width:'+g+'%;background:'+k+';opacity:.3;position:absolute"></i><i style="width:'+w+'%;background:'+k+';position:absolute"></i><span class="mark" style="left:'+c.r+'%"></span></div>'}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 var $=function(i){return document.getElementById(i)};
