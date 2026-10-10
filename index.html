@@ -15,7 +15,7 @@ label{display:block;font-size:12px;color:var(--mu);margin-bottom:4px}
 input{width:100%;background:#0e1424;border:1px solid var(--bd);color:var(--tx);border-radius:10px;padding:11px;font-size:16px}
 input:focus{outline:2px solid var(--ac);border-color:transparent}
 button{border:0;border-radius:12px;padding:13px;font-size:16px;font-weight:700;cursor:pointer;background:var(--ac);color:#fff;width:100%;margin-top:12px}
-.help{font-size:13px;color:var(--mu);margin:10px 0 0}.res{margin-top:12px;padding:12px;border-radius:12px;font-size:15px}
+.help{font-size:13px;color:var(--mu);margin:10px 0 0}.cap{display:block;color:var(--mu);font-size:11px;margin-top:6px}.mini button:disabled{opacity:.4}.res{margin-top:12px;padding:12px;border-radius:12px;font-size:15px}
 .res b{font-size:20px}
 .ok{background:#12301f;color:var(--ok)}.bad{background:#3a1620;color:var(--bad)}
 .bar{height:8px;background:#0e1424;border-radius:6px;margin-top:10px;position:relative;overflow:hidden}
@@ -34,48 +34,52 @@ footer{color:var(--mu);font-size:12px;text-align:center;margin-top:18px}
 <div class="card">
 <div class="row"><div><label for="nm">Subject (optional)</label><input id="nm" placeholder="e.g. Maths" maxlength="30"></div>
 <div><label for="rq">Required attendance %</label><input id="rq" type="number" inputmode="numeric" min="1" max="100" value="75"></div></div>
-<div class="row" style="margin-top:10px"><div><label for="at">Classes you attended (present)</label><input id="at" type="number" inputmode="numeric" min="0" placeholder="e.g. 30"></div>
-<div><label for="tt">Total classes held till now (present + absent)</label><input id="tt" type="number" inputmode="numeric" min="0" placeholder="e.g. 38"></div></div>
-<p class="help">Example: if 38 classes happened and you were present in 30 of them, type 30 and 38.</p><button id="go">Calculate</button>
+<div class="row" style="margin-top:10px"><div><label for="sm">Total classes in the whole semester</label><input id="sm" type="number" inputmode="numeric" min="1" placeholder="e.g. 60"></div>
+<div><label for="hd">Classes held till now (present + absent)</label><input id="hd" type="number" inputmode="numeric" min="0" placeholder="e.g. 38"></div></div>
+<div style="margin-top:10px"><label for="at">Classes you attended (present)</label><input id="at" type="number" inputmode="numeric" min="0" placeholder="e.g. 30"></div>
+<p class="help">Example: the semester has 60 classes in total, 38 are done and you were present in 30. Type 60, 38 and 30.</p>
+<button id="go">Calculate</button>
 <div id="out"></div>
 </div>
 <div id="list"></div>
 <footer>No sign-up, no tracking, no uploads. Counts are saved only in this browser. Rules differ between colleges, so check your own.</footer>
 <script>
-function calc(a,t,r){
-  if(t<=0||a<0||a>t||r<1||r>100)return null;
-  var p=a/t*100;
-  if(p>=r){var skip=r>=100?0:Math.floor(a*100/r-t+1e-9);return{p:p,ok:true,n:Math.max(0,skip)}}
-  var need=r>=100?Infinity:Math.ceil((r*t-100*a)/(100-r)-1e-9);return{p:p,ok:false,n:need}
+function calc(S,H,A,r){
+  if(!(S>0)||H<0||A<0||A>H||H>S||r<1||r>100)return null;
+  var need=Math.ceil(r*S/100-1e-9),rem=S-H,allowed=S-need,missed=H-A,x=allowed-missed,maxp=(A+rem)/S*100;
+  return{S:S,H:H,A:A,r:r,need:need,rem:rem,allowed:allowed,missed:missed,x:x,maxp:maxp,now:H>0?A/H*100:100};
 }
 function msg(c){
-  if(!c)return '';
-  if(c.ok)return c.n>0?'You can skip <b>'+c.n+' class'+(c.n>1?'es':'')+'</b> and stay above the line. Enjoy, responsibly.':'<b>0 bunks left</b> You are right on the edge. Attend the next one.';
-  return isFinite(c.n)?'Attend the next <b>'+c.n+' class'+(c.n>1?'es':'')+' in a row</b> to get back to safe. No bunking until then.':'Needs 100%: you can never recover from a missed class.';
+  var l='Semester: '+c.S+' classes. You need to attend '+c.need+' of them. Done: '+c.H+', left: '+c.rem+'.<br>';
+  if(c.rem===0)return l+(c.x>=0?'<b>Semester is over.</b> You finished at '+c.now.toFixed(1)+'%, which meets '+c.r+'%.':'<b>Semester is over.</b> You finished at '+c.now.toFixed(1)+'%, below '+c.r+'%.');
+  if(c.x>0)return l+'<b>You can still bunk '+c.x+' more class'+(c.x>1?'es':'')+'</b> out of the '+c.rem+' left.';
+  if(c.x===0)return l+'<b>Can\'t bunk any more.</b> Attend all '+c.rem+' remaining classes and you will reach '+c.r+'%.';
+  return l+'<b>Sorry, too late.</b> Even if you attend all '+c.rem+' remaining classes you can reach only '+c.maxp.toFixed(1)+'%, below '+c.r+'%.';
 }
-function bar(c,r){var w=Math.min(100,c.p);return '<div class="bar"><i style="width:'+w+'%;background:'+(c.ok?'var(--ok)':'var(--bad)')+'"></i><span class="mark" style="left:'+r+'%"></span></div>'}
+function bar(c){var w=c.A/c.S*100,g=c.maxp;return '<div class="bar"><i style="width:'+g+'%;background:'+(c.x>=0?'var(--ok)':'var(--bad)')+';opacity:.3;position:absolute"></i><i style="width:'+w+'%;background:'+(c.x>=0?'var(--ok)':'var(--bad)')+';position:absolute"></i><span class="mark" style="left:'+c.r+'%"></span></div><small class="cap">Bright = attended so far. Faint = if you attend every remaining class. White line = required %.</small>'}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 var $=function(i){return document.getElementById(i)};
-var S=[];try{S=JSON.parse(localStorage.getItem('bunk')||'[]')}catch(e){}
-function save(){try{localStorage.setItem('bunk',JSON.stringify(S))}catch(e){}}
+var S=[];try{S=JSON.parse(localStorage.getItem('bunk2')||'[]')}catch(e){}
+function save(){try{localStorage.setItem('bunk2',JSON.stringify(S))}catch(e){}}
+function cls(c){return c.x>0?'ok':'bad'}
 function show(){
-  var a=parseInt($('at').value),t=parseInt($('tt').value),r=parseFloat($('rq').value),c=calc(a,t,r);
-  if(!c){$('out').innerHTML='<div class="res bad">Check the numbers: attended cannot be more than total.</div>';return null}
-  $('out').innerHTML='<div class="res '+(c.ok?'ok':'bad')+'">Attendance: '+c.p.toFixed(1)+'% (need '+r+'%)<br>'+msg(c)+bar(c,r)+'</div><button id="sv">Save this subject</button>';
-  $('sv').onclick=function(){S.push({n:$('nm').value.trim()||'Subject '+(S.length+1),a:a,t:t,r:r});save();$('out').innerHTML='';$('nm').value='';$('at').value='';$('tt').value='';render()};
+  var s=parseInt($('sm').value),h=parseInt($('hd').value),a=parseInt($('at').value),r=parseFloat($('rq').value),c=calc(s,h,a,r);
+  if(!c){$('out').innerHTML='<div class="res bad">Check the numbers: attended cannot be more than held, and held cannot be more than the semester total.</div>';return null}
+  $('out').innerHTML='<div class="res '+cls(c)+'">Attendance so far: '+c.now.toFixed(1)+'% (need '+r+'% by the end)<br>'+msg(c)+bar(c)+'</div><button id="sv">Save this subject</button>';
+  $('sv').onclick=function(){S.push({n:$('nm').value.trim()||'Subject '+(S.length+1),s:s,h:h,a:a,r:r});save();$('out').innerHTML='';$('nm').value='';$('sm').value='';$('hd').value='';$('at').value='';render()};
   return c;
 }
 function render(){
   if(!S.length){$('list').innerHTML='<div class="empty">Saved subjects show up here.</div>';return}
-  $('list').innerHTML=S.map(function(s,i){var c=calc(s.a,s.t,s.r);
-    return '<div class="card"><div class="sj"><h3>'+esc(s.n)+'</h3><span class="pct" style="color:'+(c.ok?'var(--ok)':'var(--bad)')+'">'+c.p.toFixed(1)+'%</span><button class="x" data-d="'+i+'" aria-label="Delete">\u2715</button></div>'
-    +'<small style="color:var(--mu)">'+s.a+' / '+s.t+' attended, need '+s.r+'%</small>'+bar(c,s.r)
-    +'<div class="res '+(c.ok?'ok':'bad')+'">'+msg(c)+'</div>'
-    +'<div class="mini"><button data-p="'+i+'">Attended today</button><button data-m="'+i+'">Bunked today</button></div></div>'}).join('');
+  $('list').innerHTML=S.map(function(s,i){var c=calc(s.s,s.h,s.a,s.r);
+    return '<div class="card"><div class="sj"><h3>'+esc(s.n)+'</h3><span class="pct" style="color:'+(c.x>=0?'var(--ok)':'var(--bad)')+'">'+c.now.toFixed(1)+'%</span><button class="x" data-d="'+i+'" aria-label="Delete">\u2715</button></div>'
+    +'<small style="color:var(--mu)">'+s.a+' present out of '+s.h+' held, semester total '+s.s+', need '+s.r+'%</small>'+bar(c)
+    +'<div class="res '+cls(c)+'">'+msg(c)+'</div>'
+    +'<div class="mini"><button data-p="'+i+'"'+(s.h>=s.s?' disabled':'')+'>Attended today</button><button data-m="'+i+'"'+(s.h>=s.s?' disabled':'')+'>Bunked today</button></div></div>'}).join('');
 }
 $('go').onclick=show;
 $('list').onclick=function(e){var d=e.target.dataset;if(!d)return;
-  if(d.d!==undefined){S.splice(+d.d,1)}else if(d.p!==undefined){S[+d.p].a++;S[+d.p].t++}else if(d.m!==undefined){S[+d.m].t++}else return;
+  if(d.d!==undefined){S.splice(+d.d,1)}else if(d.p!==undefined){var s=S[+d.p];if(s.h>=s.s)return;s.a++;s.h++}else if(d.m!==undefined){var s2=S[+d.m];if(s2.h>=s2.s)return;s2.h++}else return;
   save();render()};
 render();
 </script></body></html>
