@@ -55,6 +55,7 @@ function msg(c){
   if(c.x===0)return '<b>Attend all '+c.rem+' remaining class'+(c.rem>1?'es':'')+'</b>';
   return '<b>Too late: max '+c.maxp.toFixed(0)+'%</b>';
 }
+function sub(c){return c.rem===0?'':(c.x>0?'out of ':'')+c.rem+' left'}
 function bar(c){var w=c.A/c.S*100,g=c.maxp,k=c.x>=0?'var(--ok)':'var(--bad)';return '<div class="bar"><i style="width:'+g+'%;background:'+k+';opacity:.3;position:absolute"></i><i style="width:'+w+'%;background:'+k+';position:absolute"></i><span class="mark" style="left:'+c.r+'%"></span></div>'}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 var $=function(i){return document.getElementById(i)};
@@ -64,7 +65,7 @@ function cls(c){return c.x>0?'ok':'bad'}
 function show(){
   var s=parseInt($('sm').value),h=parseInt($('hd').value),a=parseInt($('at').value),r=parseFloat($('rq').value),c=calc(s,h,a,r);
   if(!c){$('out').innerHTML='<div class="res bad">Check the numbers: attended cannot be more than held, and held cannot be more than the semester total.</div>';return null}
-  $('out').innerHTML='<div class="res '+cls(c)+'">'+msg(c)+'<small class="sm">'+c.now.toFixed(1)+'% now, need '+r+'%</small>'+bar(c)+'</div><button id="sv">Save this subject</button>';
+  $('out').innerHTML='<div class="res '+cls(c)+'">'+msg(c)+'<small class="sm">'+(sub(c)?sub(c)+'. ':'')+c.now.toFixed(1)+'% now, need '+r+'%</small>'+bar(c)+'</div><button id="sv">Save this subject</button>';
   $('sv').onclick=function(){S.push({n:$('nm').value.trim()||'Subject '+(S.length+1),s:s,h:h,a:a,r:r});save();$('out').innerHTML='';$('nm').value='';$('sm').value='';$('hd').value='';$('at').value='';render()};
   return c;
 }
@@ -73,7 +74,7 @@ function render(){
   $('list').innerHTML=S.map(function(s,i){var c=calc(s.s,s.h,s.a,s.r);
     return '<div class="card"><div class="sj"><h3>'+esc(s.n)+'</h3><span class="pct" style="color:'+(c.x>=0?'var(--ok)':'var(--bad)')+'">'+c.now.toFixed(1)+'%</span><button class="x" data-d="'+i+'" aria-label="Delete">\u2715</button></div>'
     +'<small style="color:var(--mu)">'+s.a+'/'+s.h+' present, '+s.s+' in semester, need '+s.r+'%</small>'+bar(c)
-    +'<div class="res '+cls(c)+'">'+msg(c)+'</div>'
+    +'<div class="res '+cls(c)+'">'+msg(c)+(sub(c)?'<small class="sm">'+sub(c)+'</small>':'')+'</div>'
     +'<div class="mini"><button data-p="'+i+'"'+(s.h>=s.s?' disabled':'')+'>Attended today</button><button data-m="'+i+'"'+(s.h>=s.s?' disabled':'')+'>Bunked today</button></div></div>'}).join('');
 }
 $('go').onclick=show;
