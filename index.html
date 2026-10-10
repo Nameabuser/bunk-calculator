@@ -16,7 +16,7 @@ input{width:100%;background:#0e1424;border:1px solid var(--bd);color:var(--tx);b
 input:focus{outline:2px solid var(--ac);border-color:transparent}
 button{border:0;border-radius:12px;padding:13px;font-size:16px;font-weight:700;cursor:pointer;background:var(--ac);color:#fff;width:100%;margin-top:12px}
 .help{font-size:13px;color:var(--mu);margin:10px 0 0}.cap{display:block;color:var(--mu);font-size:11px;margin-top:6px}.mini button:disabled{opacity:.4}.res{margin-top:12px;padding:12px;border-radius:12px;font-size:15px}
-.res b{font-size:20px}
+.res b{font-size:24px;display:block;line-height:1.2}.sm{display:block;margin-top:6px;opacity:.85;font-size:13px}
 .ok{background:#12301f;color:var(--ok)}.bad{background:#3a1620;color:var(--bad)}
 .bar{height:8px;background:#0e1424;border-radius:6px;margin-top:10px;position:relative;overflow:hidden}
 .bar i{display:block;height:100%;border-radius:6px}
@@ -37,7 +37,7 @@ footer{color:var(--mu);font-size:12px;text-align:center;margin-top:18px}
 <div class="row" style="margin-top:10px"><div><label for="sm">Total classes in the whole semester</label><input id="sm" type="number" inputmode="numeric" min="1" placeholder="e.g. 60"></div>
 <div><label for="hd">Classes held till now (present + absent)</label><input id="hd" type="number" inputmode="numeric" min="0" placeholder="e.g. 38"></div></div>
 <div style="margin-top:10px"><label for="at">Classes you attended (present)</label><input id="at" type="number" inputmode="numeric" min="0" placeholder="e.g. 30"></div>
-<p class="help">Example: the semester has 60 classes in total, 38 are done and you were present in 30. Type 60, 38 and 30.</p>
+<p class="help">Example: 60 total, 38 done, 30 present.</p>
 <button id="go">Calculate</button>
 <div id="out"></div>
 </div>
@@ -50,13 +50,12 @@ function calc(S,H,A,r){
   return{S:S,H:H,A:A,r:r,need:need,rem:rem,allowed:allowed,missed:missed,x:x,maxp:maxp,now:H>0?A/H*100:100};
 }
 function msg(c){
-  var l='Semester: '+c.S+' classes. You need to attend '+c.need+' of them. Done: '+c.H+', left: '+c.rem+'.<br>';
-  if(c.rem===0)return l+(c.x>=0?'<b>Semester is over.</b> You finished at '+c.now.toFixed(1)+'%, which meets '+c.r+'%.':'<b>Semester is over.</b> You finished at '+c.now.toFixed(1)+'%, below '+c.r+'%.');
-  if(c.x>0)return l+'<b>You can still bunk '+c.x+' more class'+(c.x>1?'es':'')+'</b> out of the '+c.rem+' left.';
-  if(c.x===0)return l+'<b>Can\'t bunk any more.</b> Attend all '+c.rem+' remaining classes and you will reach '+c.r+'%.';
-  return l+'<b>Sorry, too late.</b> Even if you attend all '+c.rem+' remaining classes you can reach only '+c.maxp.toFixed(1)+'%, below '+c.r+'%.';
+  if(c.rem===0)return '<b>Semester over</b>'+(c.x>=0?': you made it':': below '+c.r+'%');
+  if(c.x>0)return '<b>You can bunk '+c.x+' more class'+(c.x>1?'es':'')+'</b>';
+  if(c.x===0)return '<b>Attend all '+c.rem+' remaining class'+(c.rem>1?'es':'')+'</b>';
+  return '<b>Too late: max '+c.maxp.toFixed(0)+'%</b>';
 }
-function bar(c){var w=c.A/c.S*100,g=c.maxp;return '<div class="bar"><i style="width:'+g+'%;background:'+(c.x>=0?'var(--ok)':'var(--bad)')+';opacity:.3;position:absolute"></i><i style="width:'+w+'%;background:'+(c.x>=0?'var(--ok)':'var(--bad)')+';position:absolute"></i><span class="mark" style="left:'+c.r+'%"></span></div><small class="cap">Bright = attended so far. Faint = if you attend every remaining class. White line = required %.</small>'}
+function bar(c){var w=c.A/c.S*100,g=c.maxp,k=c.x>=0?'var(--ok)':'var(--bad)';return '<div class="bar"><i style="width:'+g+'%;background:'+k+';opacity:.3;position:absolute"></i><i style="width:'+w+'%;background:'+k+';position:absolute"></i><span class="mark" style="left:'+c.r+'%"></span></div>'}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 var $=function(i){return document.getElementById(i)};
 var S=[];try{S=JSON.parse(localStorage.getItem('bunk2')||'[]')}catch(e){}
@@ -65,7 +64,7 @@ function cls(c){return c.x>0?'ok':'bad'}
 function show(){
   var s=parseInt($('sm').value),h=parseInt($('hd').value),a=parseInt($('at').value),r=parseFloat($('rq').value),c=calc(s,h,a,r);
   if(!c){$('out').innerHTML='<div class="res bad">Check the numbers: attended cannot be more than held, and held cannot be more than the semester total.</div>';return null}
-  $('out').innerHTML='<div class="res '+cls(c)+'">Attendance so far: '+c.now.toFixed(1)+'% (need '+r+'% by the end)<br>'+msg(c)+bar(c)+'</div><button id="sv">Save this subject</button>';
+  $('out').innerHTML='<div class="res '+cls(c)+'">'+msg(c)+'<small class="sm">'+c.now.toFixed(1)+'% now, need '+r+'%</small>'+bar(c)+'</div><button id="sv">Save this subject</button>';
   $('sv').onclick=function(){S.push({n:$('nm').value.trim()||'Subject '+(S.length+1),s:s,h:h,a:a,r:r});save();$('out').innerHTML='';$('nm').value='';$('sm').value='';$('hd').value='';$('at').value='';render()};
   return c;
 }
@@ -73,7 +72,7 @@ function render(){
   if(!S.length){$('list').innerHTML='<div class="empty">Saved subjects show up here.</div>';return}
   $('list').innerHTML=S.map(function(s,i){var c=calc(s.s,s.h,s.a,s.r);
     return '<div class="card"><div class="sj"><h3>'+esc(s.n)+'</h3><span class="pct" style="color:'+(c.x>=0?'var(--ok)':'var(--bad)')+'">'+c.now.toFixed(1)+'%</span><button class="x" data-d="'+i+'" aria-label="Delete">\u2715</button></div>'
-    +'<small style="color:var(--mu)">'+s.a+' present out of '+s.h+' held, semester total '+s.s+', need '+s.r+'%</small>'+bar(c)
+    +'<small style="color:var(--mu)">'+s.a+'/'+s.h+' present, '+s.s+' in semester, need '+s.r+'%</small>'+bar(c)
     +'<div class="res '+cls(c)+'">'+msg(c)+'</div>'
     +'<div class="mini"><button data-p="'+i+'"'+(s.h>=s.s?' disabled':'')+'>Attended today</button><button data-m="'+i+'"'+(s.h>=s.s?' disabled':'')+'>Bunked today</button></div></div>'}).join('');
 }
