@@ -4,7 +4,7 @@
 
 **Live:** https://nameabuser.github.io/bunk-calculator/
 
-![Bunk Calculator on a phone](screenshot.png)
+![Bunk Calculator on a phone](1-screenshot.png)
 
 ## What it does
 
