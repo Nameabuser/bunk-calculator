@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f1a"><meta name="description" content="Bunk Calculator: find out how many classes you can skip and still keep your attendance safe.">
+<title>Bunk Calculator</title>
+<style>
+:root{--bg:#0b0f1a;--card:#141b2d;--bd:#243049;--tx:#eef2ff;--mu:#8b97b5;--ok:#2fd27f;--bad:#ff5d6c;--ac:#7c6cff}
+*{box-sizing:border-box}
+body{margin:0 auto;max-width:520px;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:calc(env(safe-area-inset-top) + 18px) 16px calc(40px + env(safe-area-inset-bottom))}
+h1{margin:0;font-size:28px;letter-spacing:-.5px}h1 span{color:var(--ac)}
+.sub{color:var(--mu);margin:4px 0 18px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;font-size:12px;color:var(--mu);margin-bottom:4px}
+input{width:100%;background:#0e1424;border:1px solid var(--bd);color:var(--tx);border-radius:10px;padding:11px;font-size:16px}
+input:focus{outline:2px solid var(--ac);border-color:transparent}
+button{border:0;border-radius:12px;padding:13px;font-size:16px;font-weight:700;cursor:pointer;background:var(--ac);color:#fff;width:100%;margin-top:12px}
+.res{margin-top:12px;padding:12px;border-radius:12px;font-size:15px}
+.res b{font-size:20px}
+.ok{background:#12301f;color:var(--ok)}.bad{background:#3a1620;color:var(--bad)}
+.bar{height:8px;background:#0e1424;border-radius:6px;margin-top:10px;position:relative;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:6px}
+.mark{position:absolute;top:0;bottom:0;width:2px;background:#fff}
+.sj{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sj h3{margin:0;font-size:17px}.pct{font-weight:800;font-size:20px}
+.mini{display:flex;gap:8px;margin-top:10px}
+.mini button{margin:0;padding:9px;font-size:14px;background:#1d2740;font-weight:600}
+.x{background:none!important;color:var(--mu);width:auto!important;padding:4px 8px!important;margin:0!important}
+.empty{color:var(--mu);text-align:center;padding:18px}
+footer{color:var(--mu);font-size:12px;text-align:center;margin-top:18px}
+</style></head><body>
+<h1>Bunk <span>Calculator</span></h1>
+<p class="sub">Skip smart, not blind. Everything stays on your phone.</p>
+<div class="card">
+<div class="row"><div><label for="nm">Subject (optional)</label><input id="nm" placeholder="e.g. Maths" maxlength="30"></div>
+<div><label for="rq">Required attendance %</label><input id="rq" type="number" inputmode="numeric" min="1" max="100" value="75"></div></div>
+<div class="row" style="margin-top:10px"><div><label for="at">Classes attended</label><input id="at" type="number" inputmode="numeric" min="0" placeholder="e.g. 30"></div>
+<div><label for="tt">Total classes so far</label><input id="tt" type="number" inputmode="numeric" min="0" placeholder="e.g. 38"></div></div>
+<button id="go">Calculate</button>
+<div id="out"></div>
+</div>
+<div id="list"></div>
+<footer>No sign-up, no tracking, no uploads. Counts are saved only in this browser. Rules differ between colleges, so check your own.</footer>
+<script>
+function calc(a,t,r){
+  if(t<=0||a<0||a>t||r<1||r>100)return null;
+  var p=a/t*100;
+  if(p>=r){var skip=r>=100?0:Math.floor(a*100/r-t+1e-9);return{p:p,ok:true,n:Math.max(0,skip)}}
+  var need=r>=100?Infinity:Math.ceil((r*t-100*a)/(100-r)-1e-9);return{p:p,ok:false,n:need}
+}
+function msg(c){
+  if(!c)return '';
+  if(c.ok)return c.n>0?'You can skip <b>'+c.n+' class'+(c.n>1?'es':'')+'</b> and stay above the line. Enjoy, responsibly.':'<b>0 bunks left</b> You are right on the edge. Attend the next one.';
+  return isFinite(c.n)?'Attend the next <b>'+c.n+' class'+(c.n>1?'es':'')+' in a row</b> to get back to safe. No bunking until then.':'Needs 100%: you can never recover from a missed class.';
+}
+function bar(c,r){var w=Math.min(100,c.p);return '<div class="bar"><i style="width:'+w+'%;background:'+(c.ok?'var(--ok)':'var(--bad)')+'"></i><span class="mark" style="left:'+r+'%"></span></div>'}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+var $=function(i){return document.getElementById(i)};
+var S=[];try{S=JSON.parse(localStorage.getItem('bunk')||'[]')}catch(e){}
+function save(){try{localStorage.setItem('bunk',JSON.stringify(S))}catch(e){}}
+function show(){
+  var a=parseInt($('at').value),t=parseInt($('tt').value),r=parseFloat($('rq').value),c=calc(a,t,r);
+  if(!c){$('out').innerHTML='<div class="res bad">Check the numbers: attended cannot be more than total.</div>';return null}
+  $('out').innerHTML='<div class="res '+(c.ok?'ok':'bad')+'">Attendance: '+c.p.toFixed(1)+'% (need '+r+'%)<br>'+msg(c)+bar(c,r)+'</div><button id="sv">Save this subject</button>';
+  $('sv').onclick=function(){S.push({n:$('nm').value.trim()||'Subject '+(S.length+1),a:a,t:t,r:r});save();$('out').innerHTML='';$('nm').value='';$('at').value='';$('tt').value='';render()};
+  return c;
+}
+function render(){
+  if(!S.length){$('list').innerHTML='<div class="empty">Saved subjects show up here.</div>';return}
+  $('list').innerHTML=S.map(function(s,i){var c=calc(s.a,s.t,s.r);
+    return '<div class="card"><div class="sj"><h3>'+esc(s.n)+'</h3><span class="pct" style="color:'+(c.ok?'var(--ok)':'var(--bad)')+'">'+c.p.toFixed(1)+'%</span><button class="x" data-d="'+i+'" aria-label="Delete">\u2715</button></div>'
+    +'<small style="color:var(--mu)">'+s.a+' / '+s.t+' attended, need '+s.r+'%</small>'+bar(c,s.r)
+    +'<div class="res '+(c.ok?'ok':'bad')+'">'+msg(c)+'</div>'
+    +'<div class="mini"><button data-p="'+i+'">Attended today</button><button data-m="'+i+'">Bunked today</button></div></div>'}).join('');
+}
+$('go').onclick=show;
+$('list').onclick=function(e){var d=e.target.dataset;if(!d)return;
+  if(d.d!==undefined){S.splice(+d.d,1)}else if(d.p!==undefined){S[+d.p].a++;S[+d.p].t++}else if(d.m!==undefined){S[+d.m].t++}else return;
+  save();render()};
+render();
+</script></body></html>
