@@ -1,6 +1,6 @@
 # Bunk Calculator
 
-**Skip smart, not blind.** Type in how many classes you attended and how many have happened. It tells you how many you can still bunk, or how many you must attend in a row to get back above the line.
+**Skip smart, not blind.** Tell it the semester total, how many classes are done and how many you attended. It tells you how many classes you can still bunk and still hit your required attendance.
 
 **Live:** https://nameabuser.github.io/bunk-calculator/
 
@@ -8,18 +8,28 @@
 
 ## What it does
 
-- Enter classes attended, total classes so far, and the attendance % your college needs (75% by default).
-- Above the line: shows how many classes you can skip and still stay at or above the requirement.
-- Below the line: shows how many classes in a row you have to attend to recover.
-- Save subjects, then tap "Attended today" or "Bunked today" to update the count.
-- Works on any phone or laptop browser. Add it to your home screen if you like.
+Enter four things:
+
+1. Total classes in the whole semester
+2. Classes held till now (present + absent)
+3. Classes you attended (present)
+4. Attendance % your college needs (75% by default)
+
+Example: the semester has 60 classes, 38 are done and you were present in 30. At 75% you need to attend 45 of the 60, so you can still bunk 7 more classes out of the 22 left.
+
+- If you can still bunk: it tells you how many more.
+- If you are on the edge: it tells you to attend every remaining class.
+- If it is too late: it tells you the best percentage you can still reach.
+- Save subjects, then tap "Attended today" or "Bunked today" to update the counts.
 
 ## The maths
 
-With `a` attended, `t` total and required `r` percent:
+With `S` classes in the semester, `H` held, `A` attended and `r` percent required:
 
-- Safe bunks = floor(a x 100 / r - t)
-- Classes to attend to recover = ceil((r x t - 100 x a) / (100 - r))
+- Classes you must attend in total = ceil(S x r / 100)
+- Classes left = S - H
+- Bunks left = A + (S - H) - ceil(S x r / 100)
+- Best you can reach = (A + S - H) / S
 
 ## Privacy
 
